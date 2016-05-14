@@ -202,16 +202,19 @@ find_limit()
 print "Listening on port 9027!"
 
 
+waiter = 499
+
 while True:
+    waiter += 1
+    if waiter == 500:
+        PLOT_QUEUE.insert(0, '/home/pi/glowboard/doge_glow.jpg')
+    if waiter == 1000:
+        waiter = 0
+        PLOT_QUEUE.insert(0, '/home/pi/glowboard/info.jpg')
     time.sleep(0.3)
     if PLOT_QUEUE:
         plot_image(PLOT_QUEUE.pop())
 
 
-
-
 server.shutdown()
-
-
-
 GPIO.cleanup()
