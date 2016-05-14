@@ -245,27 +245,118 @@ body {
 
     def do_GET(self):
         self.respond("""
-<!DOCTYPE html><html><head>
+<!DOCTYPE html>
+<html>
+<head>
 <link href='https://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet' type='text/css'>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
-<script>var init_time = 500;$(document).ready(function() {$('#tt').hide();
-$('#tt2').hide();$('.button').hide();$('.text').hide();$('body form').hide();$('#tt').fadeIn(1000);
-$('#tt2').delay(init_time).delay(300).fadeIn(150);$('#im_name').delay(init_time).delay(600).fadeIn(150);
-$('body form').delay(init_time).delay(450).fadeIn(150);$('#sf').delay(init_time).delay(750).fadeIn(150);
-$('#b2').delay(init_time).delay(900).fadeIn(150);});</script><style>body {text-align:center;
-background-color: #000000;}#tt {font-family:'Press Start 2P';color:#00ff00;text-align:center;font-size:70px;
-margin-bottom:2px;}.text {font-family:'Press Start 2P';color:#00ff00;text-align:center;font-size:20px;
-}.button {width: 300px;height: 40px;background-color:#00ff00;border-radius:20px;display:inline-block;}
-.button > p {font-family:'Press Start 2P';color:#000000;text-align:center;font-size:20px;margin-top:10px;}
-.button:hover {cursor: pointer;}#submit-button {background-color: #00ff00;border: solid;border-radius: 20px;
-border-color: #00ff00;width:300px;height:40px;font-family:'Press Start 2P';font-size:20px;
-color: #000000;}#submit-button:hover {cursor: pointer;}#select-button {
-background-color: #00ff00;border:solid;border-radius: 20px;border-color: #00ff00;width:300px;
-height:40px;font-family:'Press Start 2P';font-size:20px;color: #000000;}
-#select-button:hover {cursor: pointer;}</style><body><h1 id="tt">Glowboard-Plotter</h1>
-<h1 class="text" id="tt2">by EBK/Terminal21</h1><br/><br/><br/>
-<form enctype="multipart/form-data" method="post"><p class="text" id="im_name">Image: <br/>
-<br/><input type="file" name="file"></p><p><input id="submit-button" type="submit" value="UPLOAD"></p></form></body></html>
+<script>
+var init_time = 500;
+$(document).ready(function() {
+$('#tt').hide();
+$('#tt2').hide();
+$('.button').hide();
+$('.text').hide();
+$('body form').hide();
+$('#tt').fadeIn(1000);
+$('#tt2').delay(init_time).delay(300).fadeIn(150);
+$('#im_name').delay(init_time).delay(600).fadeIn(150);
+$('body form').delay(init_time).delay(450).fadeIn(150);
+$('#sf').delay(init_time).delay(750).fadeIn(150);
+$('#b2').delay(init_time).delay(900).fadeIn(150);
+});
+</script>
+<style>
+body {
+text-align:center;
+background-color: #000000;
+}
+
+#tt {
+font-family:'Press Start 2P';
+color:#00ff00;
+text-align:center;
+font-size:70px;
+margin-bottom:2px;
+}
+
+.text {
+font-family:'Press Start 2P';
+color:#00ff00;
+text-align:center;
+font-size:20px;
+}
+
+.button {
+width: 300px;
+height: 40px;
+background-color:#00ff00;
+border-radius:20px;
+display:inline-block;
+}
+
+.button > p {
+font-family:'Press Start 2P';
+color:#000000;
+text-align:center;
+font-size:20px;
+margin-top:10px;
+}
+
+.button:hover {
+cursor: pointer;
+}
+
+#submit-button {
+background-color: #00ff00;
+border: solid;
+border-radius: 20px;
+border-color: #00ff00;
+width:300px;
+height:40px;
+font-family:'Press Start 2P';
+font-size:20px;
+color: #000000;
+}
+
+#submit-button:hover {
+cursor: pointer;
+}
+
+#select-button {
+background-color: #00ff00;
+border:solid;
+border-radius: 20px;
+border-color: #00ff00;
+width:300px;
+height:40px;
+font-family:'Press Start 2P';
+font-size:20px;
+color: #000000;
+}
+
+#select-button:hover {
+cursor: pointer;
+}
+
+</style>
+
+<body>
+<h1 id="tt">Glowboard-Plotter</h1>
+<h1 class="text" id="tt2">by EBK/Terminal21</h1>
+<br/>
+<br/>
+<br/>
+<form enctype="multipart/form-data" method="post">
+<p class="text" id="im_name">Image: <br/><br/>
+<input type="file" name="file">
+</p>
+<p>
+<input id="submit-button" type="submit" value="UPLOAD">
+</p>
+</form>
+</body>
+</html>
         """)
 
     def respond(self, response, status=200):
