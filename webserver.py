@@ -256,7 +256,7 @@ color: #000000;}#submit-button:hover {cursor: pointer;}#select-button {
 background-color: #00ff00;border:solid;border-radius: 20px;border-color: #00ff00;width:300px;
 height:40px;font-family:'Press Start 2P';font-size:20px;color: #000000;}
 #select-button:hover {cursor: pointer;}</style><body><h1 id="tt">Glowboard-Plotter</h1>
-<h1 class="text" id="tt2">by Terminal21</h1><br/><br/><br/>
+<h1 class="text" id="tt2">by EBK/Terminal21</h1><br/><br/><br/>
 <form enctype="multipart/form-data" method="post"><p class="text" id="im_name">Image: <br/>
 <br/><input type="file" name="file"></p><p><input id="submit-button" type="submit" value="UPLOAD"></p></form></body></html>
         """)
