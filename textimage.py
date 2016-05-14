@@ -92,4 +92,4 @@ def draw_word_wrap(img, text, xpos=0, ypos=0, max_width=130,
 
 
 textimage = TextImage()
-print textimage(u'09:59', 128, 34, 'default', '000000')
+print textimage(u'09:59', 128, 12, 'default', '000000')
