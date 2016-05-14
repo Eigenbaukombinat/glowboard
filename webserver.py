@@ -8,6 +8,7 @@ from max7219.led import matrix
 import time
 import sys
 import random
+import os
 
 FAST = 0.001
 SLOW = 0.006
@@ -102,15 +103,18 @@ def convert_image(image_path, max_brightness):
     global CUR_DIR
     inputimage = Image.open(image_path)
     w,h = inputimage.size
-    if (w,h) != (128,64):
-         print "Input image must be 128x64 pixels!"
+    if (w,h) not in  ((128,64), (256,128)):
+         print "Input image must be 128x64 or 256x128 pixels!"
          return None
+    if w == 256:
+        #scale down to 256x64
+        inputimage.resize((256,64))
     pixels = inputimage.load()
     columns = []
-    for col in range(128):
+    for col in range(w):
         this_col = [] 
         if not CUR_DIR:
-            col = 127 - col
+            col = w - 1 - col
         for row in range(h):
 	    pixel = pixels[col,row]
 	    if max(pixel) < max_brightness:
@@ -118,7 +122,11 @@ def convert_image(image_path, max_brightness):
             else:
                 this_col.append(0)
         columns.append(this_col)
-    return columns
+    if w == 256:
+    	res = 'high'
+    else:
+        res = 'low'
+    return columns, w
 
 
 
@@ -130,8 +138,12 @@ def single_step(speed):
     time.sleep(speed)
 
 
-def drive_to_next_col():
-    for x in range (0,46):
+def drive_to_next_col(res='low'):
+    if res == 'low':
+        steps = 46
+    else:
+        steps = 23
+    for x in range (0,steps):
         single_step(FAST)
 
 cntrlr.clear()
@@ -282,7 +294,7 @@ thread.start()
 
 def plot_image(fn):
     #precalc
-    cols = convert_image(fn, 50)
+    cols, res = convert_image(fn, 50)
     if cols is None:
         print "Bad format!"
         return
@@ -302,7 +314,7 @@ def plot_image(fn):
         cntrlr.pixel(x, y, val, True)
         #time.sleep(0.1)
         #cntrlr.clear()
-        drive_to_next_col()
+        drive_to_next_col(res)
     cntrlr.clear()
     toggle_direction()
     GPIO.output(19, False)
