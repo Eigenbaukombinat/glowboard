@@ -7,10 +7,17 @@ import RPi.GPIO as GPIO
 from max7219.led import matrix
 import time
 import sys
+import random
 
 FAST = 0.001
 SLOW = 0.006
 SUPERSLOW = 0.009
+
+POOL = [
+    '/home/pi/glowboard/%s' % fn 
+    for fn in os.listdir('/home/pi/glowboard') 
+    if fn.endswith('.jpg')]
+
 
 GPIO.setmode(GPIO.BCM)
 
@@ -306,15 +313,15 @@ find_limit()
 print "Listening on port 9027!"
 
 
-waiter = 499
+waiter = 999
 
 while True:
     waiter += 1
-    if waiter == 500:
-        PLOT_QUEUE.insert(0, '/home/pi/glowboard/doge_glow.jpg')
     if waiter == 1000:
-        waiter = 0
         PLOT_QUEUE.insert(0, '/home/pi/glowboard/info.jpg')
+    if waiter == 2000:
+        waiter = 0
+        PLOT_QUEUE.insert(0, random.choice(POOL))
     time.sleep(0.3)
     if PLOT_QUEUE:
         plot_image(PLOT_QUEUE.pop())
