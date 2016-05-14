@@ -170,20 +170,27 @@ thread.daemon = True
 thread.start()
 
 def plot_image(fn):
-    GPIO.output(19, True)
-    global CUR_DIR
+    #precalc
     cols = convert_image(fn, 50)
     if cols is None:
         print "Bad format!"
         return
+    precalced_cols = []
+    for col in cols:
+        thisprecalced_col = []
+        for index, val in enumerate(col):
+            thisprecalced_col.append((index // 8, 7- (index % 8), val))
+        precalced_cols.append(thisprecalced_col)
+    GPIO.output(19, True)
+    global CUR_DIR
     print "Plotting", fn
     cntrlr.clear()
-    for col in cols:
-        for index, val in enumerate(col):
-            cntrlr.pixel(index // 8, 7 - (index % 8), val, False)
-        cntrlr.pixel(index // 8, 7 - (index % 8), val, True)
-        time.sleep(0.1)
-        cntrlr.clear()
+    for col in precalced_cols:
+        for x, y, val in col:
+            cntrlr.pixel(x, y, val, False)
+        cntrlr.pixel(x, y, val, True)
+        #time.sleep(0.1)
+        #cntrlr.clear()
         drive_to_next_col()
     cntrlr.clear()
     toggle_direction()
