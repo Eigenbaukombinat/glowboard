@@ -74,7 +74,7 @@ def find_limit():
             sys.exit(0)
     set_direction('l')
     while not limit_reached():
-        single_step(SUPERSLOW)
+        single_step(FAST)
     # a few more steps, to measure exactness
     for x in range(5):
         single_step(SUPERSLOW)
@@ -106,9 +106,12 @@ def convert_image(image_path, max_brightness):
     if (w,h) not in  ((128,64), (256,128)):
          print "Input image must be 128x64 or 256x128 pixels!"
          return None
+    res = 'low'
     if w == 256:
         #scale down to 256x64
-        inputimage.resize((256,64))
+        inputimage = inputimage.resize((256,64))
+        h = 64
+    	res = 'high'
     pixels = inputimage.load()
     columns = []
     for col in range(w):
@@ -122,11 +125,7 @@ def convert_image(image_path, max_brightness):
             else:
                 this_col.append(0)
         columns.append(this_col)
-    if w == 256:
-    	res = 'high'
-    else:
-        res = 'low'
-    return columns, w
+    return columns, res
 
 
 
@@ -176,80 +175,91 @@ body {
 	text-align:center;
 	background-color: #000000;
 }
+div.pixel {
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+}
+div.green {
+    background-color: #0f0;
+}
+div.black {
+    background-color: #000;
+}
 </style>
 <body>
     <p class=".text" style="font-family:'Press Start 2P';color:#00ff00;text-align:center;font-size:80px;">KTHXBYE!</p><br/>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
+    <div class="pixel black"></div>
+    <div class="pixel green"></div>
+    <div class="pixel green"></div>
+    <div class="pixel green"></div>
+    <div class="pixel green"></div>
+    <div class="pixel green"></div>
+    <div class="pixel green"></div>
+    <div class="pixel black"></div>
     <br/>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
+    <div class="pixel green"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel green"></div>
     <br/>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
+    <div class="pixel green"></div>
+    <div class="pixel black"></div>
+    <div class="pixel green"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel green"></div>
+    <div class="pixel black"></div>
+    <div class="pixel green"></div>
     <br/>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
+    <div class="pixel green"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel green"></div>
     <br/>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
+    <div class="pixel green"></div>
+    <div class="pixel black"></div>
+    <div class="pixel green"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel green"></div>
+    <div class="pixel black"></div>
+    <div class="pixel green"></div>
     <br/>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
+    <div class="pixel green"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel green"></div>
+    <div class="pixel green"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel green"></div>
     <br/>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
+    <div class="pixel green"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel black"></div>
+    <div class="pixel green"></div>
     <br/>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#00ff00;width:30px;height:30px;display:inline-block;"></div>
-    <div style="background-color:#000000;width:30px;height:30px;display:inline-block;"></div>
+    <div class="pixel black"></div>
+    <div class="pixel green"></div>
+    <div class="pixel green"></div>
+    <div class="pixel green"></div>
+    <div class="pixel green"></div>
+    <div class="pixel green"></div>
+    <div class="pixel green"></div>
+    <div class="pixel black"></div>
     <br/>
 </body>
 </html>
