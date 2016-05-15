@@ -19,6 +19,8 @@ POOL = [
     for fn in os.listdir('/home/pi/glowboard') 
     if fn.endswith('.jpg')]
 
+print "Found %s images in pool." % len(POOL)
+
 
 GPIO.setmode(GPIO.BCM)
 
