@@ -378,10 +378,10 @@ $('#footer').delay(init_time).delay(1500).fadeIn(500);
 <input id="submit-button" type="submit" value="UPLOAD">
 </p><br/><br/>
 <p class="text" id="info">
-Please do only upload .jpg files with a size of 128x64 pixels!<br/>
+Please do only upload .jpg files with a size of 128x64 OR 256x128 pixels!<br/>
 </p>
 <p class="text" style="text-weight:bold;" id="info2">
-Otherwise, your image will be ignored.<br/>
+Otherwise your image will be ignored.<br/>
 </form>
 <br/><br/>
 <p class="text" style="font-size:10px" id="footer">Main coding: nilo <|> Style of web interface: sesshomariu</p>
