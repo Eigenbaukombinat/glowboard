@@ -274,22 +274,7 @@ div.black {
 <head>
 <link href='https://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet' type='text/css'>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
-<script>
-var init_time = 500;
-$(document).ready(function() {
-$('#tt').hide();
-$('#tt2').hide();
-$('.button').hide();
-$('.text').hide();
-$('body form').hide();
-$('#tt').fadeIn(1000);
-$('#tt2').delay(init_time).delay(300).fadeIn(150);
-$('#im_name').delay(init_time).delay(600).fadeIn(150);
-$('body form').delay(init_time).delay(450).fadeIn(150);
-$('#sf').delay(init_time).delay(750).fadeIn(150);
-$('#b2').delay(init_time).delay(900).fadeIn(150);
-});
-</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
 <style>
 body {
 text-align:center;
@@ -363,7 +348,31 @@ color: #000000;
 cursor: pointer;
 }
 
+.footer {
+	margin-bottom: 2px;
+	text-align: right;
+}
+
 </style>
+<script>
+var init_time = 500;
+$(document).ready(function() {
+$('#tt').hide();
+$('#tt2').hide();
+$('.button').hide();
+$('.text').hide();
+$('body form').hide();
+$('#tt').fadeIn(1000);
+$('#tt2').delay(init_time).delay(300).fadeIn(150);
+$('#im_name').delay(init_time).delay(600).fadeIn(150);
+$('body form').delay(init_time).delay(450).fadeIn(150);
+$('#sf').delay(init_time).delay(750).fadeIn(150);
+$('#b2').delay(init_time).delay(900).fadeIn(150);
+$('#info').delay(init_time).delay(1050).fadeIn(150);
+$('#info2').delay(init_time).delay(1200).fadeIn(150);
+$('#footer').delay(init_time).delay(1500).fadeIn(500);
+});
+</script>
 
 <body>
 <h1 id="tt">Glowboard-Plotter</h1>
@@ -377,8 +386,15 @@ cursor: pointer;
 </p>
 <p>
 <input id="submit-button" type="submit" value="UPLOAD">
+</p><br/><br/>
+<p class="text" id="info">
+Please do only upload .jpg files with a size of 128x64 OR 256x128 pixels!<br/>
 </p>
+<p class="text" style="text-weight:bold;" id="info2">
+Otherwise your image will be ignored.<br/>
 </form>
+<br/><br/>
+<p class="text" style="font-size:10px" id="footer">Main coding: nilo <|> Style of web interface: sesshomariu</p>
 </body>
 </html>
         """)
