@@ -372,7 +372,7 @@ cursor: pointer;
 <br/>
 <br/>
 <form enctype="multipart/form-data" method="post">
-<p class="text" id="im_name">Image: <br/><br/>
+<p class="text" id="im_name">Image: <br/>(128x64 or 256x128 RGB-jpeg)<br/>
 <input type="file" name="file">
 </p>
 <p>
