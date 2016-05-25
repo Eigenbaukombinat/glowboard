@@ -1,3 +1,4 @@
+
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 import cgi
 import threading
@@ -15,8 +16,8 @@ SLOW = 0.006
 SUPERSLOW = 0.009
 
 POOL = [
-    '/home/pi/glowboard/%s' % fn 
-    for fn in os.listdir('/home/pi/glowboard') 
+    '/home/pi/glowboard/%s' % fn
+    for fn in os.listdir('/home/pi/glowboard')
     if fn.endswith('.jpg')]
 
 print "Found %s images in pool." % len(POOL)
@@ -24,7 +25,7 @@ print "Found %s images in pool." % len(POOL)
 
 GPIO.setmode(GPIO.BCM)
 
-# DIR pin of DRV8825 
+# DIR pin of DRV8825
 GPIO.setup(13,GPIO.OUT)
 
 # STP pin of DRV8825
@@ -74,6 +75,7 @@ def find_limit():
         if limit_reached():
             print "LIMIT SWITCH STILL ACTIVE, SOMETHING WENT WRONG!"
             sys.exit(0)
+    # drive to the left until limit switch collision is detected
     set_direction('l')
     while not limit_reached():
         single_step(FAST)
@@ -108,16 +110,14 @@ def convert_image(image_path, max_brightness):
     if (w,h) not in  ((128,64), (256,128)):
          print "Input image must be 128x64 or 256x128 pixels!"
          return None
-    res = 'low'
     if w == 256:
         #scale down to 256x64
         inputimage = inputimage.resize((256,64))
         h = 64
-    	res = 'high'
     pixels = inputimage.load()
     columns = []
     for col in range(w):
-        this_col = [] 
+        this_col = []
         if not CUR_DIR:
             col = w - 1 - col
         for row in range(h):
@@ -127,7 +127,7 @@ def convert_image(image_path, max_brightness):
             else:
                 this_col.append(0)
         columns.append(this_col)
-    return columns, res
+    return columns, w
 
 
 
@@ -139,10 +139,10 @@ def single_step(speed):
     time.sleep(speed)
 
 
-def drive_to_next_col(res='low'):
-    if res == 'low':
+def drive_to_next_col(res=128):
+    if res == 128:
         steps = 46
-    else:
+    elif res == 256:
         steps = 23
     for x in range (0,steps):
         single_step(FAST)
@@ -159,12 +159,21 @@ class GlowImageHandler(BaseHTTPRequestHandler):
             environ={'REQUEST_METHOD':'POST',
                      'CONTENT_TYPE':self.headers['Content-Type'],
                      })
+        f_passes = form.get('passes', 1)
+        try:
+            passes = int(f_passes)
+        except ValueError:
+            passes = 1
+        if passes > 10:
+            passes = 10
+        elif passes < 1:
+            passes = 1
         filename = form['file'].filename
         data = form['file'].file.read()
         fn = "/tmp/%s"%filename
         with open(fn, "wb") as imagefile:
             imagefile.write(data)
-        PLOT_QUEUE.insert(0, fn)
+        PLOT_QUEUE.insert(0, (fn, passes))
         self.respond("""
         <!DOCTYPE html>
 <html>
@@ -364,7 +373,7 @@ $('.text').hide();
 $('body form').hide();
 $('#tt').fadeIn(1000);
 $('#tt2').delay(init_time).delay(300).fadeIn(150);
-$('#im_name').delay(init_time).delay(600).fadeIn(150);
+$('p.text').delay(init_time).delay(600).fadeIn(150);
 $('body form').delay(init_time).delay(450).fadeIn(150);
 $('#sf').delay(init_time).delay(750).fadeIn(150);
 $('#b2').delay(init_time).delay(900).fadeIn(150);
@@ -383,7 +392,11 @@ $('#footer').delay(init_time).delay(1500).fadeIn(500);
 <form enctype="multipart/form-data" method="post">
 <p class="text" id="im_name">Image: <br/>(128x64 or 256x128 RGB-jpeg)<br/>
 <input type="file" name="file">
+<p class="text">Image: <br/><br/>
+<input type="file" name="file" />
 </p>
+<p class="text">Number of passes: <br/><br/>
+<input type="text" value="1" name="passes" />
 <p>
 <input id="submit-button" type="submit" value="UPLOAD">
 </p><br/><br/>
@@ -411,31 +424,40 @@ thread = threading.Thread(target=server.serve_forever)
 thread.daemon = True
 thread.start()
 
-def plot_image(fn):
-    #precalc
-    cols, res = convert_image(fn, 50)
-    if cols is None:
-        print "Bad format!"
-        return
-    precalced_cols = []
-    for col in cols:
-        thisprecalced_col = []
-        for index, val in enumerate(col):
-            thisprecalced_col.append((index // 8, 7- (index % 8), val))
-        precalced_cols.append(thisprecalced_col)
+def plot_image(fn, passes):
+    precalced_passes = []
+    brightness_offset = 0
+    increase_per_pass = 255 / float(passes)
+    for pass_id in range(passes):
+        brightness_offset += (increase_per_pass / 3 + ((passes - 1) * (1.7 * (passes / 10.0))))
+        print 3 + ((passes - 1) * (1.7 * (passes / 10.0)))
+        brightness_offset = int(brightness_offset)
+        #precalc
+        cols, res = convert_image(fn, brightness_offset)
+        if cols is None:
+            print "Bad format!"
+            return
+        precalced_cols = []
+        for col in cols:
+            thisprecalced_col = []
+            for index, val in enumerate(col):
+                thisprecalced_col.append((index // 8, 7- (index % 8), val))
+            precalced_cols.append(thisprecalced_col)
+        precalced_passes.append(precalced_cols)
+    #plot
     GPIO.output(19, True)
     global CUR_DIR
-    print "Plotting", fn
-    cntrlr.clear()
-    for col in precalced_cols:
-        for x, y, val in col:
-            cntrlr.pixel(x, y, val, False)
-        cntrlr.pixel(x, y, val, True)
-        #time.sleep(0.1)
-        #cntrlr.clear()
-        drive_to_next_col(res)
-    cntrlr.clear()
-    toggle_direction()
+    for plot_cols in precalced_passes:
+        cntrlr.clear()
+        for col in plot_cols:
+            for x, y, val in col:
+                cntrlr.pixel(x, y, val, False)
+            cntrlr.pixel(x, y, val, True)
+            #time.sleep(0.1)
+            #cntrlr.clear()
+            drive_to_next_col(res)
+        cntrlr.clear()
+        toggle_direction()
     GPIO.output(19, False)
 
 
@@ -449,13 +471,13 @@ waiter = 999
 while True:
     waiter += 1
     if waiter == 1000:
-        PLOT_QUEUE.insert(0, '/home/pi/glowboard/info.jpg')
+        PLOT_QUEUE.insert(0, ('/home/pi/glowboard/info.jpg', 1))
     if waiter == 2000:
         waiter = 0
-        PLOT_QUEUE.insert(0, random.choice(POOL))
+        PLOT_QUEUE.insert(0, (random.choice(POOL), 1))
     time.sleep(0.3)
     if PLOT_QUEUE:
-        plot_image(PLOT_QUEUE.pop())
+        plot_image(*PLOT_QUEUE.pop())
 
 
 server.shutdown()
