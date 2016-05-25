@@ -122,7 +122,7 @@ def convert_image(image_path, max_brightness):
             col = w - 1 - col
         for row in range(h):
 	    pixel = pixels[col,row]
-	    if max(pixel) < max_brightness:
+	    if max(pixel) >= max_brightness:
                 this_col.append(1)
             else:
                 this_col.append(0)
@@ -159,7 +159,7 @@ class GlowImageHandler(BaseHTTPRequestHandler):
             environ={'REQUEST_METHOD':'POST',
                      'CONTENT_TYPE':self.headers['Content-Type'],
                      })
-        f_passes = form.get('passes', 1)
+        f_passes = form.getvalue('passes')
         try:
             passes = int(f_passes)
         except ValueError:
@@ -391,12 +391,10 @@ $('#footer').delay(init_time).delay(1500).fadeIn(500);
 <br/>
 <form enctype="multipart/form-data" method="post">
 <p class="text" id="im_name">Image: <br/>(128x64 or 256x128 RGB-jpeg)<br/>
-<input type="file" name="file">
-<p class="text">Image: <br/><br/>
 <input type="file" name="file" />
 </p>
 <p class="text">Number of passes: <br/><br/>
-<input type="text" value="1" name="passes" />
+<input type="text" value="1" size="2" name="passes" />
 <p>
 <input id="submit-button" type="submit" value="UPLOAD">
 </p><br/><br/>
@@ -425,12 +423,11 @@ thread.daemon = True
 thread.start()
 
 def plot_image(fn, passes):
-    precalced_passes = []
+    print "plotting with %s passes" % passes
     brightness_offset = 0
-    increase_per_pass = 255 / float(passes)
+    increase_per_pass = 240 / float(passes)
     for pass_id in range(passes):
-        brightness_offset += (increase_per_pass / 3 + ((passes - 1) * (1.7 * (passes / 10.0))))
-        print 3 + ((passes - 1) * (1.7 * (passes / 10.0)))
+        brightness_offset += increase_per_pass 
         brightness_offset = int(brightness_offset)
         #precalc
         cols, res = convert_image(fn, brightness_offset)
@@ -443,22 +440,20 @@ def plot_image(fn, passes):
             for index, val in enumerate(col):
                 thisprecalced_col.append((index // 8, 7- (index % 8), val))
             precalced_cols.append(thisprecalced_col)
-        precalced_passes.append(precalced_cols)
-    #plot
-    GPIO.output(19, True)
-    global CUR_DIR
-    for plot_cols in precalced_passes:
-        cntrlr.clear()
-        for col in plot_cols:
-            for x, y, val in col:
-                cntrlr.pixel(x, y, val, False)
-            cntrlr.pixel(x, y, val, True)
-            #time.sleep(0.1)
-            #cntrlr.clear()
-            drive_to_next_col(res)
-        cntrlr.clear()
-        toggle_direction()
-    GPIO.output(19, False)
+	#plot
+	GPIO.output(19, True)
+	global CUR_DIR
+	cntrlr.clear()
+	for col in precalced_cols:
+	    for x, y, val in col:
+		cntrlr.pixel(x, y, val, False)
+	    cntrlr.pixel(x, y, val, True)
+	    #time.sleep(0.1)
+	    #cntrlr.clear()
+	    drive_to_next_col(res)
+	cntrlr.clear()
+	toggle_direction()
+	GPIO.output(19, False)
 
 
 find_limit()
