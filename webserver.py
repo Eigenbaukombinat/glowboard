@@ -126,10 +126,6 @@ def convert_image(image_path, max_brightness):
             else:
                 this_col.append(0)
         columns.append(this_col)
-    if w == 256:
-    	res = 'high'
-    else:
-        res = 'low'
     return columns, w
 
 
@@ -142,10 +138,10 @@ def single_step(speed):
     time.sleep(speed)
 
 
-def drive_to_next_col(res='low'):
-    if res == 'low':
+def drive_to_next_col(res=128):
+    if res == 128:
         steps = 46
-    else:
+    elif res == 256:
         steps = 23
     for x in range (0,steps):
         single_step(FAST)
