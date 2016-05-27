@@ -164,10 +164,6 @@ class GlowImageHandler(BaseHTTPRequestHandler):
             passes = int(f_passes)
         except ValueError:
             passes = 1
-        if passes > 10:
-            passes = 10
-        elif passes < 1:
-            passes = 1
         filename = form['file'].filename
         data = form['file'].file.read()
         fn = "/tmp/%s"%filename
@@ -424,6 +420,11 @@ thread.start()
 
 def plot_image(fn, passes):
     print "plotting with %s passes" % passes
+    if passes > 10:
+        passes = 10
+    elif passes < 1:
+        passes = 1
+    precalced_passes = []
     brightness_offset = 0
     increase_per_pass = 240 / float(passes)
     for pass_id in range(passes):
@@ -469,7 +470,13 @@ while True:
         PLOT_QUEUE.insert(0, ('/home/pi/glowboard/info.jpg', 1))
     if waiter == 2000:
         waiter = 0
-        PLOT_QUEUE.insert(0, (random.choice(POOL), 1))
+        poolimg = random.choice(POOL)
+        passes = 1
+        if 'passes' in poolimg:
+            passesres = re.findall('passes_([0-9]+)\.jpg', poolimg)
+            if len(passesres):
+                passes = int(passesres[0])
+        PLOT_QUEUE.insert(0, (random.choice(POOL), passes))
     time.sleep(0.3)
     if PLOT_QUEUE:
         plot_image(*PLOT_QUEUE.pop())
