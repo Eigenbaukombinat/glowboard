@@ -1,4 +1,4 @@
-
+import re
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 import cgi
 import threading
@@ -15,12 +15,18 @@ FAST = 0.001
 SLOW = 0.006
 SUPERSLOW = 0.009
 
-POOL = [
+POOL_PASSES = [
     '/home/pi/glowboard/%s' % fn
     for fn in os.listdir('/home/pi/glowboard')
-    if fn.endswith('.jpg')]
+    if fn.endswith('.jpg') and 'passes' in fn]
 
-print "Found %s images in pool." % len(POOL)
+POOL_MONO = [
+    '/home/pi/glowboard/%s' % fn
+    for fn in os.listdir('/home/pi/glowboard')
+    if fn.endswith('.jpg') and 'passes' not in fn]
+
+print "Found %s multipass images in pool." % len(POOL_PASSES)
+print "Found %s mono images in pool." % len(POOL_MONO)
 
 
 GPIO.setmode(GPIO.BCM)
@@ -466,17 +472,19 @@ waiter = 999
 
 while True:
     waiter += 1
-    if waiter == 1000:
+    if waiter == 500:
         PLOT_QUEUE.insert(0, ('/home/pi/glowboard/info.jpg', 1))
-    if waiter == 2000:
-        waiter = 0
-        poolimg = random.choice(POOL)
+    if waiter == 1000:
+        poolimg = random.choice(POOL_PASSES)
         passes = 1
-        if 'passes' in poolimg:
-            passesres = re.findall('passes_([0-9]+)\.jpg', poolimg)
-            if len(passesres):
-                passes = int(passesres[0])
-        PLOT_QUEUE.insert(0, (random.choice(POOL), passes))
+        passesres = re.findall('passes_([0-9]+)\.jpg', poolimg)
+        if len(passesres):
+	    passes = int(passesres[0])
+        PLOT_QUEUE.insert(0, (poolimg, passes))
+    if waiter == 1500:
+        waiter = 0
+        poolimg = random.choice(POOL_MONO)
+        PLOT_QUEUE.insert(0, (poolimg, 1))
     time.sleep(0.3)
     if PLOT_QUEUE:
         plot_image(*PLOT_QUEUE.pop())
