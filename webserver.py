@@ -1,32 +1,37 @@
-import re
-from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler,HTTPServer
+from luma.led_matrix.device import max7219
+
+from PIL import Image
 import cgi
+import os
+import random
+import re
+import RPi.GPIO as GPIO
+import sys
 import threading
 import time
-from PIL import Image
-import RPi.GPIO as GPIO
-from max7219.led import matrix
 import time
-import sys
-import random
-import os
+
 
 FAST = 0.001
 SLOW = 0.006
 SUPERSLOW = 0.009
+IMGPATH = '/home/pi/glowboard'
+IMGPATH = '.'
+
 
 POOL_PASSES = [
     '/home/pi/glowboard/%s' % fn
-    for fn in os.listdir('/home/pi/glowboard')
+    for fn in os.listdir(IMGPATH)
     if fn.endswith('.jpg') and 'passes' in fn]
 
 POOL_MONO = [
     '/home/pi/glowboard/%s' % fn
-    for fn in os.listdir('/home/pi/glowboard')
+    for fn in os.listdir(IMGPATH)
     if fn.endswith('.jpg') and 'passes' not in fn]
 
-print "Found %s multipass images in pool." % len(POOL_PASSES)
-print "Found %s mono images in pool." % len(POOL_MONO)
+print( "Found %s multipass images in pool." % len(POOL_PASSES))
+print( "Found %s mono images in pool." % len(POOL_MONO))
 
 
 GPIO.setmode(GPIO.BCM)
@@ -49,7 +54,7 @@ GPIO.output(26, False)
 CUR_DIR = True  # True -> nach rechts
 GPIO.output(13, CUR_DIR)
 
-cntrlr = matrix()
+cntrlr = max7219()
 cntrlr.brightness(15)
 
 
@@ -66,7 +71,7 @@ def set_direction(direction):
     elif ldir == 'l':
         CUR_DIR = False
     else:
-        print "FATAL ERROR: Direction %s not valid"
+        print( "FATAL ERROR: Direction %s not valid")
         sys.exit(0)
     GPIO.output(13, CUR_DIR)
 
@@ -74,12 +79,12 @@ def set_direction(direction):
 def find_limit():
     GPIO.output(19, True)
     if limit_reached():
-        print "Limit switch active, moving right a bit and trying again now."
+        print( "Limit switch active, moving right a bit and trying again now.")
         set_direction('r')
         for x in range(50):
             single_step(SUPERSLOW)
         if limit_reached():
-            print "LIMIT SWITCH STILL ACTIVE, SOMETHING WENT WRONG!"
+            print( "LIMIT SWITCH STILL ACTIVE, SOMETHING WENT WRONG!")
             sys.exit(0)
     # drive to the left until limit switch collision is detected
     set_direction('l')
@@ -93,7 +98,7 @@ def find_limit():
     while limit_reached():
         single_step(SUPERSLOW)
         rsteps += 1
-    print "limit found. %i steps expected, %i steps got." % (5, rsteps)
+    print( "limit found. %i steps expected, %i steps got." % (5, rsteps))
     # drive to first column position
     for x in range(30):
         single_step(SLOW)
@@ -114,7 +119,7 @@ def convert_image(image_path, max_brightness):
     inputimage = Image.open(image_path)
     w,h = inputimage.size
     if (w,h) not in  ((128,64), (256,128)):
-         print "Input image must be 128x64 or 256x128 pixels!"
+         print( "Input image must be 128x64 or 256x128 pixels!")
          return None
     if w == 256:
         #scale down to 256x64
@@ -127,8 +132,8 @@ def convert_image(image_path, max_brightness):
         if not CUR_DIR:
             col = w - 1 - col
         for row in range(h):
-	    pixel = pixels[col,row]
-	    if max(pixel) >= max_brightness:
+            pixel = pixels[col,row]
+            if max(pixel) >= max_brightness:
                 this_col.append(1)
             else:
                 this_col.append(0)
@@ -180,13 +185,13 @@ class GlowImageHandler(BaseHTTPRequestHandler):
         <!DOCTYPE html>
 <html>
 <head>
-	<link href='https://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet' type='text/css'>
-	<title>KTHXBYE!</title>
+    <link href='https://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet' type='text/css'>
+    <title>KTHXBYE!</title>
 </head>
 <style>
 body {
-	text-align:center;
-	background-color: #000000;
+    text-align:center;
+    background-color: #000000;
 }
 div.pixel {
     width: 30px;
@@ -360,8 +365,8 @@ cursor: pointer;
 }
 
 .footer {
-	margin-bottom: 2px;
-	text-align: right;
+    margin-bottom: 2px;
+    text-align: right;
 }
 
 </style>
@@ -425,7 +430,7 @@ thread.daemon = True
 thread.start()
 
 def plot_image(fn, passes):
-    print "plotting with %s passes" % passes
+    print( "plotting %s with %s passes" % (fn, passes))
     if passes > 10:
         passes = 10
     elif passes < 1:
@@ -434,12 +439,12 @@ def plot_image(fn, passes):
     brightness_offset = 0
     increase_per_pass = 240 / float(passes)
     for pass_id in range(passes):
-        brightness_offset += increase_per_pass 
+        brightness_offset += increase_per_pass
         brightness_offset = int(brightness_offset)
         #precalc
         cols, res = convert_image(fn, brightness_offset)
         if cols is None:
-            print "Bad format!"
+            print( "Bad format!")
             return
         precalced_cols = []
         for col in cols:
@@ -447,25 +452,26 @@ def plot_image(fn, passes):
             for index, val in enumerate(col):
                 thisprecalced_col.append((index // 8, 7- (index % 8), val))
             precalced_cols.append(thisprecalced_col)
-	#plot
-	GPIO.output(19, True)
-	global CUR_DIR
-	cntrlr.clear()
-	for col in precalced_cols:
-	    for x, y, val in col:
-		cntrlr.pixel(x, y, val, False)
-	    cntrlr.pixel(x, y, val, True)
-	    #time.sleep(0.1)
-	    #cntrlr.clear()
-	    drive_to_next_col(res)
-	cntrlr.clear()
-	toggle_direction()
-	GPIO.output(19, False)
+    #plot
+    GPIO.output(19, True)
+    global CUR_DIR
+    cntrlr.clear()
+    for col in precalced_cols:
+        for x, y, val in col:
+            #asdf
+            cntrlr.pixel(x, y, val, False)
+            cntrlr.pixel(x, y, val, True)
+            #time.sleep(0.1)
+            #cntrlr.clear()
+        drive_to_next_col(res)
+    cntrlr.clear()
+    toggle_direction()
+    GPIO.output(19, False)
 
 
 find_limit()
 
-print "Listening on port 9027!"
+print( "Listening on port 9027!")
 
 
 waiter = 999
@@ -479,8 +485,8 @@ while True:
         passes = 1
         passesres = re.findall('passes_([0-9]+)\.jpg', poolimg)
         if len(passesres):
-	    passes = int(passesres[0])
-        PLOT_QUEUE.insert(0, (poolimg, passes))
+            passes = int(passesres[0])
+            PLOT_QUEUE.insert(0, (poolimg, passes))
     if waiter == 1500:
         waiter = 0
         poolimg = random.choice(POOL_MONO)
