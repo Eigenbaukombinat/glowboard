@@ -1,8 +1,8 @@
 #include <SPI.h>
 #include <MD_MAX72xx.h>
+#include "main.h"
 
 // max7219 stuff
-
 #define MAX_DEVICES	1
 #define HARDWARE_TYPE MD_MAX72XX::GENERIC_HW
 #define CLK_PIN   18  
@@ -10,17 +10,21 @@
 #define CS_PIN    5 
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 
-// initial delay time bewteem columns, influences the "width" of a column
-// XXX needs to be calibrated on every direction switch
-int  delayTime = 90; 
+uint8_t current_bitmap[1024][8];
+uint8_t next_bitmap[1024][8];
+
+
+// initial delay time in microseconds bewteen columns (for highest resolution of 1024 columns),
+// influences the "width" of a column
+int delay_time_base = 90000; 
 
 // stepper pin defition
 const int stepPin = 21; 
 const int dirPin = 22;
 
-// limits switches
-// XXX need seperate pins for left/right, to be able to do "column count"
-const int limitPin = 12;
+// limit switches
+const int limitPinL = 12;
+const int limitPinR = 14;
 
 // setup pwm for stepper step generation
 const int PWMFreq = 600; /* Hz */
@@ -30,61 +34,61 @@ const int MAX_DUTY_CYCLE = (int)(pow(2, PWMResolution) - 1);
 
 // initial direction
 int dirState = LOW;
-int lastNewDir = HIGH;
 
-void checkLimits() {
-  byte limitState = digitalRead(limitPin);
-  int newDir;
-  if (limitState == HIGH) {
-    if (dirState == LOW) { 
-      newDir = HIGH;
-    } else {
-      newDir = LOW;
-    }
-    digitalWrite(dirPin, newDir);
-    dirState = newDir;
+// sync stuff
+int last_sync;
+hw_timer_t *ColTimer = NULL;
+
+
+void IRAM_ATTR drawCol() {
+  // calculate position in current bitmap array using delay_time_base and
+  // time passed since last_sync and current direction, and draw it
+  // it might also be possible to use timerAlarmRead to get the elapsed time 
+  // since last calibration (because the timer is maybe restarted from 0 there)
+  int now = millis() * 1000;
+  int elapsed = now - last_sync;
+  int position = elapsed / delay_time_base;
+  if (dirState == LOW) {
+    position = 1024 - position;
   }
-}
-
-#define BITMAP_SIZE 8
-
-const uint8_t bitmap[BITMAP_SIZE][8] = {
-  { 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88 },
-  { 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88, 0x88 },
-  { 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44 },
-  { 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44 },
-  { 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb },
-  { 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb },
-  { 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22 },
-  { 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22 },
-};
-
-
-void draw_bitmap() {
-  // do we need clear here?
-  mx.clear();
-  for (uint8_t j=0; j<BITMAP_SIZE; j++) {
-    for (uint8_t i=0; i<8; i++) {
-      mx.setColumn(i, bitmap[j][i]);
-    }
-    mx.control(MD_MAX72XX::UPDATE, MD_MAX72XX::ON);
-    mx.control(MD_MAX72XX::UPDATE, MD_MAX72XX::OFF);
-    delay(delayTime);  
-    // no longer needed when using interrput? 
-    // checkLimits();
+  for (int i=0; i<8; i++) {
+      mx.setRow(i, current_bitmap[position][7-i]);
   }
 }
 
 
-void IRAM_ATTR toggleLimit() {
-  checkLimits();
+
+void calibrate() {
+    int now = millis() * 1000;
+    int time_all_cols = now - last_sync;
+    // this is actually debouncing the limit switches ;)
+    if (time_all_cols < 10000) {
+      return;
+    }
+    delay_time_base = time_all_cols / 1024;
+    last_sync = millis() * 1000;
+    timerAlarmWrite(ColTimer, delay_time_base, true);
+}
+
+void IRAM_ATTR limitL() {
+    calibrate();
+    dirState = HIGH;
+    digitalWrite(dirPin, dirState);
+}
+
+void IRAM_ATTR limitR() {
+    calibrate();
+    dirState = LOW;
+    digitalWrite(dirPin, dirState);
 }
 
 
 void setup() {
   // configure pins  
-  pinMode(limitPin, INPUT);
-  attachInterrupt(limitPin, toggleLimit, CHANGE);
+  pinMode(limitPinL, INPUT_PULLUP);
+  pinMode(limitPinR, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(limitPinL), limitL, FALLING);
+  attachInterrupt(digitalPinToInterrupt(limitPinR), limitR, FALLING);
   pinMode(dirPin, OUTPUT);
   pinMode(stepPin, OUTPUT);
   // output initial direction
@@ -93,10 +97,27 @@ void setup() {
   ledcSetup(PWMChannel, PWMFreq, PWMResolution);
   ledcAttachPin(stepPin, PWMChannel);
   ledcWrite(PWMChannel, MAX_DUTY_CYCLE/2.8);
+  // register column draw timer
+  ColTimer = timerBegin(0, 80, true);
+  timerAttachInterrupt(ColTimer, &drawCol, true);
+  timerAlarmWrite(ColTimer, delay_time_base, true);
+  timerAlarmEnable(ColTimer);
   // initialize max7219
   mx.begin();
+  mx.clear();
+  // save initial timing 
+  last_sync = millis() * 1000;
+  // todo: wifi + webserver stuff
+  // https://raphaelpralat.medium.com/example-of-json-rest-api-for-esp32-4a5f64774a05
+  // copy initial bitmap to current
+  for (uint8_t j=0; j<256; j++) {
+    for (int x=0; x<(1024/256); x++) {
+      for (int i=0; i<8; i++) {
+        current_bitmap[j+x][i] = initial_bitmap[j][i];
+      }
+    }
+  }
 }
 
 void loop() {
-  draw_bitmap();
 }
